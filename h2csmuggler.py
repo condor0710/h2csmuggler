@@ -44,14 +44,17 @@ def establish_tcp_connection(proxy_url):
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    retSock = sock
+    sock.settimeout(MAX_TIMEOUT)
+    sock.connect(connect_args)
+
     if proxy_url.scheme == "https":
-        retSock = ssl.wrap_socket(sock, ssl_version=ssl.PROTOCOL_TLS)
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+        sock = context.wrap_socket(sock, server_hostname=proxy_url.hostname)
 
-    retSock.settimeout(MAX_TIMEOUT)
-    retSock.connect(connect_args)
+    return sock
 
-    return retSock
 
 
 def send_initial_request(connection, proxy_url, settings):
